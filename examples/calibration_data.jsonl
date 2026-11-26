@@ -1,0 +1,4 @@
+{"input": "My parcel is three days late, where is it?", "question": {"type": "noul", "instructions": "The customer asks for a refund."}, "label": false}
+{"input": "The mug arrived smashed. Please refund me.", "question": {"type": "noul", "instructions": "The customer asks for a refund."}, "label": true}
+{"input": "The mug arrived smashed. Please refund me.", "question": {"type": "choice", "instructions": "Which support queue should handle this ticket?", "options": {"returns": "damaged or wrong items, refunds", "shipping": "late or lost parcels", "billing": "invoices and charges", "other": "anything else"}}, "label": "returns"}
+{"input": "My parcel is three days late, where is it?", "question": {"type": "choice", "instructions": "Which support queue should handle this ticket?", "options": {"returns": "damaged or wrong items, refunds", "shipping": "late or lost parcels", "billing": "invoices and charges", "other": "anything else"}}, "label": "shipping"}

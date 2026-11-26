@@ -1,0 +1,1 @@
+{"backend": "openai", "model": "Qwen/Qwen2.5-7B-Instruct", "base_url": "http://localhost:8001/v1", "api_key": ""}

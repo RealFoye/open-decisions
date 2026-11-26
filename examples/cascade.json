@@ -1,0 +1,9 @@
+{
+  "strategy": "cascade",
+  "stages": [
+    {"backend": "local", "model": "Qwen/Qwen2.5-1.5B-Instruct", "min_confidence": 0.85,
+     "calibration": "calibration.json"},
+    {"backend": "openai", "model": "gpt-4.1-mini", "min_confidence": 0.85},
+    {"backend": "anthropic", "model": "claude-opus-5-5", "method": "sampling", "samples": 8}
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "input": "Hi, I ordered a desk lamp (order #4821) two weeks ago. The parcel arrived five days late and the lamp was cracked. I'd like my money back, and honestly I'm thinking of cancelling my membership.",
+  "questions": {
+    "wants_refund": {"type": "noul", "instructions": "The customer asks for a refund."},
+    "churn_risk": {"type": "noul", "instructions": "The customer may cancel their account."},
+    "queue": {
+      "type": "choice",
+      "instructions": "Which support queue should handle this ticket?",
+      "options": {
+        "returns": "damaged or wrong items, refunds",
+        "shipping": "late or lost parcels",
+        "billing": "invoices and charges",
+        "other": "anything else"
+      }
+    },
+    "urgency": {
+      "type": "score",
+      "instructions": "How urgently should we reply?",
+      "levels": ["can wait a week", "within 3 days", "within 24 hours", "within the hour"]
+    }
+  }
+}
