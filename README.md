@@ -133,7 +133,7 @@ opendecisions serve --model Qwen/Qwen2.5-1.5B-Instruct --calibration calibration
 
 热缓存只省掉一次前缀 prefill（这里约 1–2 秒），题目一多，冷热就差不多了；100 题那一行热比冷慢 1 秒是计时波动。
 
-**关于 dtype**：较新的 transformers（这里是 5.5）不指定 `dtype` 时按 checkpoint 的类型加载，Qwen2.5 是 bf16。CPU 上 bf16 比 fp32 慢约 3 倍，而且舍入误差会让两种算法的 log p 相差 0.28–0.45，所以基准脚本默认 `--dtype float32`。
+**关于 dtype**：transformers 5 不指定 `dtype` 时按 checkpoint 的类型加载，Qwen2.5 是 bf16。CPU 上 bf16 比 fp32 慢约 3 倍，而且舍入误差会让两种算法的 log p 相差 0.28–0.45。所以本地后端在 CPU 上默认用 fp32，在 GPU / MPS 上默认沿用 checkpoint 的类型。`serve`、`calibrate` 和两个基准脚本都可以用 `--dtype` 改（`float32` / `bfloat16` / `float16` / `auto`），JSON 配置里写 `"dtype": "bfloat16"` 也行。
 
 ### 离线：随机权重模型
 
@@ -228,7 +228,7 @@ Estimated probabilities are labelled as such rather than passed off as exact.
 
 Real model: `python benchmarks/bench_prefix.py --model Qwen/Qwen2.5-0.5B-Instruct`, fp32 on an Apple M4 Pro CPU (8 torch threads), 1,500-token input, questions alternating yes/no, 4-way choice and 5-level score. 100 questions take 526.7 s scored one by one and 15.2 s with a shared prefix (34.6×), computing 420,979 vs 14,419 tokens, with identical results (max |Δ log p| 7.0e-05). At 10 questions the speed-up is 15.8×, at 50 it is 34.6×.
 
-Recent transformers releases load the checkpoint dtype (bf16 for Qwen2.5) unless told otherwise. On CPU that is about 3× slower than fp32, and bf16 rounding makes the two algorithms differ by 0.28–0.45 in log p, so the benchmark defaults to `--dtype float32`.
+transformers 5 loads the checkpoint dtype (bf16 for Qwen2.5) unless told otherwise. On CPU that is about 3× slower than fp32, and bf16 rounding makes the two algorithms differ by 0.28–0.45 in log p. The local backend therefore defaults to fp32 on CPU and to the checkpoint dtype on GPU / MPS. `serve`, `calibrate` and both benchmark scripts take `--dtype` (`float32` / `bfloat16` / `float16` / `auto`), and JSON configs accept `"dtype"`.
 
 Without `--model` it runs offline on a 19M-parameter random-weight Llama (timings do not depend on weights): 4-core CPU, 5,753-token input, 100 questions in 212.6 s naively vs 16.4 s shared (13×), max |Δ log p| 2.3e-05. See the tables above. After sharing, most of the remaining cost is KV copying inside transformers. A paged-attention server (vLLM/SGLang via the optional `openai` backend) should remove that, but this has not been measured yet.
 

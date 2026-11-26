@@ -36,6 +36,19 @@ from .base import Backend, BackendResult
 _SENTINEL = "<<<OPENDECISIONS_QUESTION>>>"
 
 
+def resolve_dtype(dtype: str | None, device: str | torch.device | None) -> torch.dtype | str:
+    """Weights dtype for ``from_pretrained``: float32 on CPU unless asked otherwise."""
+    if dtype is None:
+        # no device -> the model stays where from_pretrained put it, i.e. on the CPU
+        return torch.float32 if torch.device(device or "cpu").type == "cpu" else "auto"
+    if dtype == "auto":
+        return "auto"
+    resolved = getattr(torch, dtype, None)
+    if not isinstance(resolved, torch.dtype):
+        raise ValueError(f"unknown dtype {dtype!r} (expected 'auto' or e.g. 'float32', 'bfloat16', 'float16')")
+    return resolved
+
+
 @dataclass
 class _Prefix:
     kv: list[tuple[torch.Tensor, torch.Tensor]]
@@ -85,11 +98,22 @@ class LocalBackend(Backend):
     @classmethod
     def from_pretrained(cls, model_id: str, *, device: str | None = None, dtype: str | None = None,
                         **kwargs) -> "LocalBackend":
+        """Load a Hugging Face causal LM.
+
+        ``dtype`` is a torch dtype name (``"float32"``, ``"bfloat16"``, ``"float16"``) or
+        ``"auto"`` for the checkpoint's own dtype. The default is ``"float32"`` when the
+        model runs on CPU (bf16 / fp16 are slow there and add rounding noise) and
+        ``"auto"`` on GPU / MPS. Without an explicit dtype, transformers >= 5 would load
+        the checkpoint dtype, e.g. bf16 for Qwen2.5, even on CPU.
+        """
+        import transformers
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
+        resolved = resolve_dtype(dtype, device)
+        # transformers 5 renamed `torch_dtype` to `dtype` (4.x only knows `torch_dtype`)
+        kw = "dtype" if int(transformers.__version__.split(".")[0]) >= 5 else "torch_dtype"
         tok = AutoTokenizer.from_pretrained(model_id)
-        torch_dtype = getattr(torch, dtype) if dtype else None
-        model = AutoModelForCausalLM.from_pretrained(model_id, dtype=torch_dtype)
+        model = AutoModelForCausalLM.from_pretrained(model_id, **{kw: resolved})
         return cls(model, tok, model_id=model_id, device=device, **kwargs)
 
     # ------------------------------------------------------------------ prompt text

@@ -18,6 +18,8 @@ def _spec_from_args(args) -> dict:
     spec = {"backend": args.backend, "model": args.model}
     if getattr(args, "device", None):
         spec["device"] = args.device
+    if getattr(args, "dtype", None):
+        spec["dtype"] = args.dtype
     if getattr(args, "calibration", None):
         spec["calibration"] = args.calibration
     return spec
@@ -100,7 +102,10 @@ def main(argv: list[str] | None = None) -> None:
         sp.add_argument("--config", help="JSON config (single backend or orchestrator)")
         sp.add_argument("--backend", default="local", choices=["local", "openai", "anthropic"])
         sp.add_argument("--model", default="Qwen/Qwen2.5-1.5B-Instruct")
-        sp.add_argument("--device", default=None)
+        sp.add_argument("--device", default=None, help="local backend: cpu, cuda, mps, ...")
+        sp.add_argument("--dtype", default=None,
+                        help="local backend: float32, bfloat16, float16 or auto (checkpoint dtype); "
+                             "default float32 on CPU, auto otherwise")
 
     s = sub.add_parser("serve", help="run the HTTP server")
     common(s)

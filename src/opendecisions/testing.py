@@ -59,7 +59,12 @@ def tiny_model(vocab_size: int, *, hidden: int = 64, layers: int = 2, heads: int
 def tiny_backend(**kwargs):
     from .backends.local import LocalBackend
 
+    from .backends.local import resolve_dtype
+
     tok = tiny_tokenizer()
     model = tiny_model(len(tok), **{k: kwargs.pop(k) for k in ("hidden", "layers", "heads", "kv_heads", "seed") if k in kwargs})
+    dtype = resolve_dtype(kwargs.pop("dtype", None), kwargs.get("device"))
+    if dtype != "auto":
+        model = model.to(dtype)
     kwargs.setdefault("prompt_format", "plain")
     return LocalBackend(model, tok, model_id="tiny-random-llama", **kwargs)
