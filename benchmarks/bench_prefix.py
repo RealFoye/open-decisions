@@ -64,13 +64,20 @@ def main() -> None:
     ap.add_argument("--questions", type=int, nargs="+", default=[10, 50, 100])
     ap.add_argument("--batch-size", type=int, default=16)
     ap.add_argument("--threads", type=int, default=None)
+    ap.add_argument("--device", default=None, help="e.g. cpu, cuda, mps (with --model)")
+    ap.add_argument("--dtype", default="float32",
+                    help="weights dtype with --model (default float32; recent transformers otherwise "
+                         "load the checkpoint dtype, often bfloat16, which is slow on CPU and adds "
+                         "rounding noise to the naive-vs-shared comparison)")
     args = ap.parse_args()
     if args.threads:
         torch.set_num_threads(args.threads)
 
     if args.model:
-        shared = LocalBackend.from_pretrained(args.model, batch_size=args.batch_size)
-        model, tok, name = shared.model, shared.tokenizer, args.model
+        shared = LocalBackend.from_pretrained(args.model, batch_size=args.batch_size,
+                                              device=args.device, dtype=args.dtype)
+        model, tok = shared.model, shared.tokenizer
+        name = f"{args.model} ({model.dtype}, {shared.device})"
     else:
         from opendecisions.testing import tiny_model, tiny_tokenizer
 
